@@ -12,7 +12,6 @@ const TOKEN = "ihpf8e1qingr69gsvum4n5cdriov67"; // 🔹 Gere um token com o coma
 
 const IGDB_URL = "https://api.igdb.com/v4/games";
 
-// 🔹 Mapeamento de plataformas IGDB para os nomes usados no frontend
 const plataformas = {
     "Nintendo 8Bits": 18,
     "Super Nintendo": 19,
@@ -40,11 +39,10 @@ const plataformas = {
     "Xbox One": 49
 };
 
-// 🔥 Função para buscar TODOS os jogos da IGDB usando paginação
 async function fetchAllGamesFromIGDB(platformId) {
     let allGames = [];
     let offset = 0;
-    const limit = 50; // IGDB permite no máximo 50 por requisição
+    const limit = 50;
 
     try {
         console.log(`🔹 Buscando TODOS os jogos para plataforma ID ${platformId}...`);
@@ -64,11 +62,11 @@ async function fetchAllGamesFromIGDB(platformId) {
                 }
             );
 
-            if (response.data.length === 0) break; // Se não vierem mais jogos, encerra a busca
+            if (response.data.length === 0) break;
 
             console.log(`📀 Obtidos ${response.data.length} jogos (offset ${offset})`);
             allGames = allGames.concat(response.data);
-            offset += limit; // Avança para a próxima página
+            offset += limit;
         }
 
         return allGames.map(game => ({
@@ -86,10 +84,13 @@ async function fetchAllGamesFromIGDB(platformId) {
     }
 }
 
-// 🔥 Função para buscar jogos de todas as plataformas e salvar no JSON
 async function generateAllGamesOnStart() {
-    let allGamesByPlatform = {};
+    if (fs.existsSync("jogos.json")) {
+        console.log("✅ Arquivo jogos.json encontrado! Usando os dados salvos.");
+        return;
+    }
 
+    let allGamesByPlatform = {};
     console.log("🔄 Buscando TODOS os jogos ao iniciar o servidor...");
     for (const [platformName, platformId] of Object.entries(plataformas)) {
         console.log(`📀 Buscando jogos para ${platformName}...`);
@@ -97,15 +98,12 @@ async function generateAllGamesOnStart() {
         allGamesByPlatform[platformName] = games;
     }
 
-    // 🔹 Salva o JSON automaticamente
     fs.writeFileSync("jogos.json", JSON.stringify(allGamesByPlatform, null, 2));
     console.log("✅ Jogos salvos automaticamente ao iniciar o servidor!");
 }
 
-// 🔥 Chamar a função automaticamente ao iniciar o servidor
 generateAllGamesOnStart();
 
-// 🔥 Rota para acessar os jogos salvos no JSON
 app.get("/games", (req, res) => {
     try {
         const platform = req.query.platform;
@@ -127,11 +125,16 @@ app.get("/games", (req, res) => {
     }
 });
 
-// 🔥 Inicia o servidor
-app.listen(3000, () => {
-    console.log("✅ Servidor rodando na porta 3000");
+
+// 🔍 Listar todas as rotas disponíveis no servidor
+app._router.stack.forEach((r) => {
+    if (r.route && r.route.path) {
+        console.log(`✅ Rota disponível: ${r.route.path}`);
+    }
 });
 
 
 
-
+app.listen(3000, () => {
+    console.log("✅ Servidor rodando na porta 3000");
+});
